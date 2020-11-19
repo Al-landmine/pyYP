@@ -1298,9 +1298,9 @@ def settings():
         menu_3.delete(0, 'end')
         menu_3_s.delete(0, 'end')
         for n in config.options("tool"):
-            menu_3.add_command(label = n.ljust(20),command = lambda arg=n: clip_ch_test(arg))
+            menu_3.add_command(label = n.ljust(20),command = lambda arg=n: tools(arg))
         for n in config.options("tool"):
-            menu_3_s.add_command(label = n.ljust(20),command = lambda arg=n: clip_ch_test(arg))
+            menu_3_s.add_command(label = n.ljust(20),command = lambda arg=n: tools(arg))
         set.destroy()
 
     #toolの追加
@@ -1999,4 +1999,3 @@ style.map("Treeview",
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
-#gitのテスト
