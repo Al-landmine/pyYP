@@ -1710,7 +1710,7 @@ def select_s(event,n):
 #mainGUI
 config = conf.config()
 col = ["d","new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]
-col2= ["new","d","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]  #testカラムの順番等
+col2= ["new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]  #testカラムの順番等
 
 root = tk.Tk()
 root.title("YP")
@@ -1999,3 +1999,4 @@ style.map("Treeview",
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
+#gitのテスト
