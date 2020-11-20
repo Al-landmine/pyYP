@@ -75,7 +75,8 @@ def config():
                                     "timeout"   : "15"},
                         "player" : { },
                           "tool" : { },
-                    "set_filter" : {"se"        : ""},
+                    "set_filter" : {"se"        : "",
+                                    "voice"     : "0"},
                         "filter" : { }}
 
     if os.path.exists("./config.ini"):

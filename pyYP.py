@@ -29,6 +29,7 @@ import datetime
 import pyperclip
 import gc
 
+from gtts import gTTS
 from tkinter import colorchooser
 from tkinter import filedialog
 from operator import itemgetter
@@ -55,7 +56,7 @@ def fixed_map(option):
 ##    thread.start()
 def get_once():
     names = get_names()
-    thread = threading.Thread(target=get_ch.get_ch,args = (config,names))
+    thread = threading.Thread(target = get_ch.get_ch,args = (config,names,))
     thread.daemon = True
     thread.start()
 
@@ -72,7 +73,7 @@ def get_names():
 
 def get_start():
     names = get_names()
-    thread = threading.Thread(target=get_ch.get_ch,args = (config,names))
+    thread = threading.Thread(target = get_ch.get_ch,args = (config,names,))
     thread.daemon = True
     thread.start()
     try:    #次回更新予約
@@ -84,6 +85,17 @@ def get_start():
         after = 60002
     print("next auto_update",after,"ms")
     root.after(after, get_start)
+
+def plays(voice):
+    voice += "が、開始しました。"
+    tts = gTTS(text=voice, lang='ja')
+    tts.save('./yomiko.mp3')
+    playsound('yomiko.mp3')
+def sound(voice):
+    thread2 = threading.Thread(target = plays,args = (voice,))
+    thread2.daemon = True
+    thread2.start()
+
 
 def show_yp():
 # 0 チャンネル名<> 1 ID<> 2 TIP<> 3 コンタクトURL<> 4 ジャンル<> 5 詳細<>
@@ -101,6 +113,7 @@ def show_yp():
         root.after(1000,show_yp)
         return
     res = get_ch.get_list()
+    voice = ""
     for n in range(conf.yp_names(config)[1]):
         ch_list[n].delete(*ch_list[n].get_children())   #各YPtabクリア、再現性の無いエラーがたまに出る･･･\
                                                         #YP削除でタイミングが悪いと整合性がとれてない気がする
@@ -130,6 +143,7 @@ def show_yp():
             if pppp[21] != "":          #フィルタにかかった物の色を変える
                 tag = pppp[21]
                 if pppp[20] == "◎" and pppp[23] != "True" and pppp[24] == "True": #ついでに音フラグチェック
+                    voice += str(pppp[0]) + "、"    #音声読み上げtext
                     se = True
             detail =  html.unescape(pppp[4]         #まとめてエスケープコードも変換
                                    +pppp[5]
@@ -254,6 +268,8 @@ def show_yp():
 
     if se == True:
         playsound(config.get("set_filter","se"))
+    if config.get("set_filter","voice") == "1" and voice !="":
+        sound(voice)
 
     up_time.config(text = "更新:"+(get_ch.update_t().strftime('%H時%M分%S秒　'))
                                  +"更新間隔:"+(config.get("peca","update")+"分"))
@@ -341,6 +357,7 @@ def set_filter():
                 tmpa = tmp1 + "\\\\" + tmp2 + "\\\\" + tmp3 + tmp4
                 config.set("filter",tmp0,tmpa)
         config.set("set_filter","se",m_path.get())
+        config.set("set_filter","voice",str(voice_on.get()))
         get_ch.search(config,get_names())
         filt.destroy()
 
@@ -637,9 +654,14 @@ def set_filter():
 
     m_path.insert(tk.END,config.get("set_filter","se"))
 
+    voice_on = tk.StringVar()
+    voice_on.set(config.get("set_filter","voice"))
+    m_voice = tk.Checkbutton(filt,variable = voice_on ,text = "SE+チャンネル名を読み上げる。" ,font = ("",10),height = 1)
+
     m_path_label.place(x =  5 , y = 380)
-    m_path.place(x =  12 , y = 405)
-    m_pathb.place (x = 458 ,y = 402)
+    m_path.place  (x =  12 , y = 405)
+    m_pathb.place (x = 458 , y = 402)
+    m_voice.place (x =  10 , y = 430)
 
     #フィルタセッティングフレーム
     filt_set_f = tk.Frame(filt,height = 160,width = 490)
@@ -779,7 +801,7 @@ def set_filter():
     bl_show.set("0")
 
     alltab = tk.Checkbutton(tab[3],variable = alltab_show,text = "すべてタブに表示する",font = ("",10),height = 1)
-    sound = tk.Checkbutton(tab[3],variable = sound_show,text = "新着時音を鳴らす",font = ("",10),height = 1)
+    sound = tk.Checkbutton(tab[3],variable = sound_show,text = "新着時SEを鳴らす",font = ("",10),height = 1)
     bl = tk.Checkbutton(tab[3],variable = bl_show,text = "ブラックリスト(非表示)",font = ("",10),height = 1)
     default = "#ffffff"
     color = tk.Button(tab[3],text="背景色", command = getcolor,bg = default,font=("",9))
