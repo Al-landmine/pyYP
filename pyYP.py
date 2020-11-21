@@ -28,6 +28,8 @@ import webbrowser
 import datetime
 import pyperclip
 import gc
+import random
+import pygame
 
 from gtts import gTTS
 from tkinter import colorchooser
@@ -86,16 +88,17 @@ def get_start():
     print("next auto_update",after,"ms")
     root.after(after, get_start)
 
-def plays(voice):
-    voice += "が、開始しました。"
-    tts = gTTS(text=voice, lang='ja')
-    tts.save('./yomiko.mp3')
-    playsound('yomiko.mp3')
 def sound(voice):
-    thread2 = threading.Thread(target = plays,args = (voice,))
-    thread2.daemon = True
-    thread2.start()
-
+    try:
+        voice += "が、開始しました。"
+        tts = gTTS(text=voice, lang='ja')
+        tts.save("./yomiko.mp3")
+        pygame.mixer.init()
+        pygame.mixer.music.load("yomiko.mp3")
+        pygame.mixer.music.play(1)
+    except:
+        print("読み上げエラー")
+        pass
 
 def show_yp():
 # 0 チャンネル名<> 1 ID<> 2 TIP<> 3 コンタクトURL<> 4 ジャンル<> 5 詳細<>
@@ -113,10 +116,12 @@ def show_yp():
         root.after(1000,show_yp)
         return
     res = get_ch.get_list()
+
     voice = ""
+
     for n in range(conf.yp_names(config)[1]):
-        ch_list[n].delete(*ch_list[n].get_children())   #各YPtabクリア、再現性の無いエラーがたまに出る･･･\
-                                                        #YP削除でタイミングが悪いと整合性がとれてない気がする
+        ch_list[n].delete(*ch_list[n].get_children())
+
         ppp = res[n]
 
         if sort_listener_show.get() == True:
@@ -267,9 +272,14 @@ def show_yp():
     ch_list_all.tag_configure("g",background='#f0f0f0')
 
     if se == True:
-        playsound(config.get("set_filter","se"))
-    if config.get("set_filter","voice") == "1" and voice !="":
-        sound(voice)
+        pygame.mixer.init()
+        pygame.mixer.music.load(config.get("set_filter","se"))
+        pygame.mixer.music.play(1)
+
+    if config.get("set_filter","voice") == "1" and voice != "":
+        thread2 = threading.Thread(target = sound,args = (voice,))
+        thread2.daemon = True
+        thread2.start()
 
     up_time.config(text = "更新:"+(get_ch.update_t().strftime('%H時%M分%S秒　'))
                                  +"更新間隔:"+(config.get("peca","update")+"分"))
@@ -320,7 +330,7 @@ def set_filter():
             return "break"
 
     def se_path():
-        file_path = filedialog.askopenfilename(filetypes = [("", ".wav"),("すべて",".*")],multiple = False)
+        file_path = filedialog.askopenfilename(filetypes = [("", ".wav"),("", ".mp3"),("すべて",".*")],multiple = False)
         m_path.delete(0, tk.END)
         m_path.insert(tk.END,file_path)
         if file_path == "":
@@ -2007,6 +2017,7 @@ def mouse_y_scroll_s(event,n):
     elif event.delta < 0:
         ch_list[n].yview_scroll(2, 'units')
 
+count = 0
 update2 = 0
 new_tab()
 get_start()

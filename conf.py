@@ -75,7 +75,7 @@ def config():
                                     "timeout"   : "15"},
                         "player" : { },
                           "tool" : { },
-                    "set_filter" : {"se"        : "",
+                    "set_filter" : {"se"        : "./sample.mp3",
                                     "voice"     : "0"},
                         "filter" : { }}
 
