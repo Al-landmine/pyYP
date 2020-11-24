@@ -57,7 +57,7 @@ def get_ch(config,names):
 # 15 配信時間<> 16 ステート<> 17 コメント<> 18 ダイレクト接続
 #　後から付加した分
 # 19 YP名 20 新着記号 21 フィルタ+背景色 22 すべてタブに表示
-# 23 ブラックリスト 24 SEフラグ
+# 23 ブラックリスト 24 SEフラグ 25 filter_tag
 def search(config,names):
     global all_list
     global update
@@ -100,6 +100,7 @@ def search(config,names):
             pp.append("")               #すべてタブに表示　フラグ (22)
             pp.append("")               #ブラックリスト　フラグ (23)
             pp.append("")               #SEフラグ(24)
+            pp.append("")               #filter_tag(25)
             for ser in config.options("filter"):
 ##                time.sleep(0.0001)       #wait入れてみてテスト
                 ward = config.get("filter",ser).split("\\\\")
@@ -162,7 +163,8 @@ def search(config,names):
                     if str(m) != "None":
                         if ward[38] == "0":
 
-                            pp[21] = ward[36]      #色付加
+                            pp[21] = ward[36]   #背景色
+                            pp[25] = str(ser)   #フィルタ名付加
                             if ward[33] == "1": #すべてタブに乗せる
                                 pp[22] = "True"
                             if ward[35] == "1": #ブラックリスト
@@ -197,6 +199,7 @@ def search(config,names):
                                 m = re.search(check, rif,flags=re.IGNORECASE)
                                 if str(m) != "None":
                                     pp[21] = ward[36]   #背景色
+                                    pp[25] = str(ser)   #フィルタ名付加
                                     if ward[33] == "1":
                                         pp[22] = "True"
                                     if ward[35] == "1": #ブラックリスト

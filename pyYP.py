@@ -28,8 +28,8 @@ import webbrowser
 import datetime
 import pyperclip
 import gc
-import random
 import pygame
+import psutil   #CPU優先度
 
 from gtts import gTTS
 from tkinter import colorchooser
@@ -107,7 +107,7 @@ def show_yp():
 # 15 配信時間<> 16 ステート<> 17 コメント<> 18 ダイレクト接続
 #　後から付加した分
 # 19 YP名 20 新着記号 21 フィルタ+背景色 22 すべてタブに表示
-# 23 ブラックリスト 24 SEフラグ
+# 23 ブラックリスト 24 SEフラグ 25 filter_tag
     global update2
     all = []
     se = False
@@ -124,16 +124,6 @@ def show_yp():
 
         ppp = res[n]
 
-        if sort_listener_show.get() == True:
-            try:
-                ppp.sort(key=itemgetter(6),reverse=True)     #リスナー数順にソート
-            except:
-                pass
-        if sort_filter_show.get() == True:
-            try:
-                ppp.sort(key=itemgetter(21),reverse=True)    #フィルタソート
-            except:
-                pass
         for m in range(len(ppp)):
             pppp = ppp[m]
             if pppp[22] == "True":      #全てtabに乗せるか判定1
@@ -141,15 +131,13 @@ def show_yp():
             else:
                 if conf.get_yp(config,n)[2] == "True":    #全てtabに乗せるか判定2
                     all.append(pppp)
-            if m % 2 == 1:              #一行ごとに色を変える
-                tag = "g"
-            else:
-                tag = "w"
             if pppp[21] != "":          #フィルタにかかった物の色を変える
                 tag = pppp[21]
                 if pppp[20] == "◎" and pppp[23] != "True" and pppp[24] == "True": #ついでに音フラグチェック
                     voice += str(pppp[0]) + "、"    #音声読み上げtext
                     se = True
+            else:
+                tag = ""
             detail =  html.unescape(pppp[4]         #まとめてエスケープコードも変換
                                    +pppp[5]
                                    +pppp[10]
@@ -169,17 +157,10 @@ def show_yp():
                                                   pppp[19],
                                                   pppp[3],
                                                   pppp[1],
-                                                  pppp[2]
+                                                  pppp[2],
+                                                  pppp[25]
                                                   ),tags = tag)
-        #各タブにチャンネル数付加(うーむ後付けで美しくない…）
-        try:
-            if m % 2 == 1:
-                tag = "w"
-            else:
-                tag = "g"
-        except:
-            tag = "g"
-
+        #各タブにチャンネル数付加
         ch_list[n] .insert("", "end", values=("0",
                                               "",
                                               (conf.get_yp(config,n)[0]),
@@ -192,58 +173,66 @@ def show_yp():
                                               "",
                                               "",
                                               ""
-                                              ),tags = tag)
+                                              ),tags = "")
+
+        #ソート
+        try:
+            if sort_listener_show.get() == True:
+                l = [(ch_list[n].set(k, "listener"), k) for k in ch_list[n].get_children('')]
+                l.sort(key=lambda t: int(t[0].split("/")[0]), reverse=True)
+                # rearrange items in sorted positions
+                for index, (val, k) in enumerate(l):
+                    ch_list[n].move(k, '', index)
+
+                # reverse sort next time
+                ch_list[n].heading("listener", command=lambda: \
+                           treeview_sort_column(ch_list[n],"listener", not reverse))
+        except:
+            print("リスナー数ソートエラー")
+            pass
+
+        try:
+            if sort_filter_show.get() == True:
+                l = [(ch_list[n].set(k, "filter_tag"), k) for k in ch_list[n].get_children('')]
+                l.sort(key=lambda t: t[0],reverse=True)
+                # rearrange items in sorted positions
+                for index, (val, k) in enumerate(l):
+                    ch_list[n].move(k, '', index)
+
+                # reverse sort next time
+                ch_list[n].heading("filter_tag", command=lambda: \
+                           treeview_sort_column(ch_list[n],"filter_tag", not reverse))
+        except:
+            print("フィルタ ソートエラー")
+            pass
+
+        #一行ごとに背景色を変える
+        num = 0
+        for b in ch_list[n].get_children():
+            item = ch_list[n].item(b)['tags']
+            if len(item) == 0:
+                if num %2 == 0:
+                    ch_list[n].item(b,tags = "g")
+                else:
+                    ch_list[n].item(b,tags = "w")
+                num += 1
+
+        #背景色変更
         for c in conf.color_list(config):
             ch_list[n].tag_configure(c,background = c)
         ch_list[n] .tag_configure("g",background='#f0f0f0')
 
     #全てtab
-    #チャンネル数付加
-    mess = []
-    mess.append("すべて")
-    mess.append('')
-    mess.append('')
-    mess.append('')
-    mess.append('')
-    mess.append("チャンネル数："+str(len(all)))
-    mess.append(-99)
-    mess.append("-99")
-    mess.append("0")
-    mess.append("RAW")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("00:00")
-    mess.append("")
-    mess.append("")
-    mess.append("0")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    mess.append("")
-    all.append(mess)
-    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
 
-    if sort_listener_show.get() == True:
-        all.sort(key=itemgetter(6),reverse = True)     #リスナー数順にソート
-    if sort_filter_show.get() == True:
-        all.sort(key=itemgetter(21),reverse=True)    #フィルタソート
+    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
 
     for m in range(len(all)):
 
         pppp = all[m]
-        if m % 2 == 1:
-            tag = "g"
-        else:
-            tag = "w"
-        if pppp[21] == "ch":
-            tag = "ch"
         if pppp[21] != "":
             tag = pppp[21]
+        else:
+            tag = ""
 
         detail =  html.unescape( pppp[4]
                                 +pppp[5]
@@ -265,12 +254,72 @@ def show_yp():
                                               pppp[19],
                                               pppp[3],
                                               pppp[1],
-                                              pppp[2]
+                                              pppp[2],
+                                              pppp[25]
                                               ),tags = tag)
+
+    ch_list_all.insert("", "end", values=("0",
+                                          "",
+                                          "すべて",
+                                          "チャンネル数："+str(len(all)),
+                                          "-99/-99",
+                                          "0",
+                                          "00:00",
+                                          "RAW",
+                                          ""
+                                          "",
+                                          "",
+                                          ""
+                                          ),tags = tag)
+
+#ソート
+    try:
+        if sort_listener_show.get() == True:
+            l = [(ch_list_all.set(k, "listener"), k) for k in ch_list_all.get_children('')]
+            l.sort(key=lambda t: int(t[0].split("/")[0]), reverse=True)
+            # rearrange items in sorted positions
+            for index, (val, k) in enumerate(l):
+                ch_list_all.move(k, '', index)
+
+            # reverse sort next time
+            ch_list_all.heading("listener", command=lambda: \
+                       treeview_sort_column(ch_list_all,"listener", not reverse))
+    except:
+        print("リスナー数ソートエラー")
+        pass
+
+    try:
+        if sort_filter_show.get() == True:
+            l = [(ch_list_all.set(k, "filter_tag"), k) for k in ch_list_all.get_children('')]
+            l.sort(key=lambda t: t[0],reverse=True)
+            # rearrange items in sorted positions
+            for index, (val, k) in enumerate(l):
+                ch_list_all.move(k, '', index)
+
+            # reverse sort next time
+            ch_list_all.heading("filter_tag", command=lambda: \
+                       treeview_sort_column(ch_list_all,"filter_tag", not reverse))
+    except:
+        print("フィルタ ソートエラー")
+        pass
+
+    #一行ごとに背景色を変える
+    num = 0
+    for b in ch_list_all.get_children():
+        item = ch_list_all.item(b)['tags']
+        if len(item) == 0:
+            if num %2 == 0:
+                ch_list_all.item(b,tags = "g")
+            else:
+                ch_list_all.item(b,tags = "w")
+            num += 1
+
+    #背景色変更
     for c in conf.color_list(config):
         ch_list_all.tag_configure(c,background = c)
     ch_list_all.tag_configure("g",background='#f0f0f0')
 
+    #SE　読み上げ
     if se == True:
         pygame.mixer.init()
         pygame.mixer.music.load(config.get("set_filter","se"))
@@ -1593,31 +1642,33 @@ def new_tab():
 
     c_size_all = config.get("column_size","all").split(",")
 
-    ch_list_all.column("d"       , width = int(c_size_all[0] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("new"     , width = int(c_size_all[1] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("ch_name" , width = int(c_size_all[2] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("detail"  , width = int(c_size_all[3] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("listener", width = int(c_size_all[4] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("bitrate" , width = int(c_size_all[5] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("time"    , width = int(c_size_all[6] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("type"    , width = int(c_size_all[7] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("yp"      , width = int(c_size_all[8] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("contact" , width = int(c_size_all[9] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("id"      , width = int(c_size_all[10]),anchor=tk.W,stretch = "False")
-    ch_list_all.column("tip"     , width = int(c_size_all[11]),anchor=tk.W,stretch = "False")
+    ch_list_all.column("d"         , width = int(c_size_all[0] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("new"       , width = int(c_size_all[1] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("ch_name"   , width = int(c_size_all[2] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("detail"    , width = int(c_size_all[3] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("listener"  , width = int(c_size_all[4] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("bitrate"   , width = int(c_size_all[5] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("time"      , width = int(c_size_all[6] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("type"      , width = int(c_size_all[7] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("yp"        , width = int(c_size_all[8] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("contact"   , width = int(c_size_all[9] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("id"        , width = int(c_size_all[10]),anchor=tk.W,stretch = "False")
+    ch_list_all.column("tip"       , width = int(c_size_all[11]),anchor=tk.W,stretch = "False")
+    ch_list_all.column("filter_tag", width = 100,anchor=tk.W,stretch = "False")
 
-    ch_list_all.heading("d"        , text = "D")
-    ch_list_all.heading("new"      , text = "新")
-    ch_list_all.heading("ch_name"  , text = "チャンネル名")
-    ch_list_all.heading("detail"   , text = "詳細")
-    ch_list_all.heading("listener" , text = "リスナー数")
-    ch_list_all.heading("bitrate"  , text = "bit rate")
-    ch_list_all.heading("time"     , text = "配信時間")
-    ch_list_all.heading("type"     , text = "type")
-    ch_list_all.heading("yp"       , text = "YP")
-    ch_list_all.heading("contact"  , text = "contact URL")
-    ch_list_all.heading("id"       , text = "ID")
-    ch_list_all.heading("tip"      , text = "IP")
+    ch_list_all.heading("d"         , text = "D")
+    ch_list_all.heading("new"       , text = "新")
+    ch_list_all.heading("ch_name"   , text = "チャンネル名")
+    ch_list_all.heading("detail"    , text = "詳細")
+    ch_list_all.heading("listener"  , text = "リスナー数")
+    ch_list_all.heading("bitrate"   , text = "bit rate")
+    ch_list_all.heading("time"      , text = "配信時間")
+    ch_list_all.heading("type"      , text = "type")
+    ch_list_all.heading("yp"        , text = "YP")
+    ch_list_all.heading("contact"   , text = "contact URL")
+    ch_list_all.heading("id"        , text = "ID")
+    ch_list_all.heading("tip"       , text = "IP")
+    ch_list_all.heading("filter_tag", text = "filter_tag")
 
     ch_list_all.config(yscrollcommand=scrollbary_all.set)
     ch_list_all.config(xscrollcommand=scrollbarx_all.set)
@@ -1650,31 +1701,33 @@ def new_tab():
         scrollbary[n].pack(fill = "y", side = "right")
         scrollbarx[n].pack(fill = "x", side = "bottom")
 
-        ch_list[n].column("d"       , width = int(tab_name[3]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("new"     , width = int(tab_name[4]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("ch_name" , width = int(tab_name[5]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("detail"  , width = int(tab_name[6]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("listener", width = int(tab_name[7]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("bitrate" , width = int(tab_name[8]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("time"    , width = int(tab_name[9]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("type"    , width = int(tab_name[10]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("yp"      , width = int(tab_name[11]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("contact" , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("id"      , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("tip"     , width = int(tab_name[13]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("d"         , width = int(tab_name[3]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("new"       , width = int(tab_name[4]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("ch_name"   , width = int(tab_name[5]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("detail"    , width = int(tab_name[6]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("listener"  , width = int(tab_name[7]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("bitrate"   , width = int(tab_name[8]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("time"      , width = int(tab_name[9]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("type"      , width = int(tab_name[10]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("yp"        , width = int(tab_name[11]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("contact"   , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("id"        , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("tip"       , width = int(tab_name[13]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("filter_tag", width = 100,anchor=tk.W,stretch = "False")
 
-        ch_list[n].heading("d"        , text = "D")
-        ch_list[n].heading("new"      , text = "新")
-        ch_list[n].heading("ch_name"  , text = "チャンネル名")
-        ch_list[n].heading("detail"   , text = "詳細")
-        ch_list[n].heading("listener" , text = "リスナー数")
-        ch_list[n].heading("bitrate"  , text = "bit rate")
-        ch_list[n].heading("time"     , text = "配信時間")
-        ch_list[n].heading("type"     , text = "type")
-        ch_list[n].heading("yp"       , text = "YP")
-        ch_list[n].heading("contact"  , text = "contact URL")
-        ch_list[n].heading("id"       , text = "ID")
-        ch_list[n].heading("tip"      , text = "IP")
+        ch_list[n].heading("d"         , text = "D")
+        ch_list[n].heading("new"       , text = "新")
+        ch_list[n].heading("ch_name"   , text = "チャンネル名")
+        ch_list[n].heading("detail"    , text = "詳細")
+        ch_list[n].heading("listener"  , text = "リスナー数")
+        ch_list[n].heading("bitrate"   , text = "bit rate")
+        ch_list[n].heading("time"      , text = "配信時間")
+        ch_list[n].heading("type"      , text = "type")
+        ch_list[n].heading("yp"        , text = "YP")
+        ch_list[n].heading("contact"   , text = "contact URL")
+        ch_list[n].heading("id"        , text = "ID")
+        ch_list[n].heading("tip"       , text = "IP")
+        ch_list[n].heading("filter_tag", text = "filter_tag")
 
         ch_list[n].config(yscrollcommand=scrollbary[n].set)
         ch_list[n].config(xscrollcommand=scrollbarx[n].set)
@@ -1740,9 +1793,14 @@ def select_s(event,n):
             a = str(c_type[1])        #引数
             play(list,player,a,list["type"])
 #mainGUI
+    #(高HIGH_PRIORITY_CLASS,通常以上ABOVE_NORMAL_PRIORITY_ CLASS,通常NORMAL_PRIORITY_CLASS,通常以下BELOW_NORMAL_PRIORITY_CLASS,低IDLE_PRIORITY_CLASS)
+p = psutil.Process()                #CPU優先度
+p.nice(psutil.IDLE_PRIORITY_CLASS)
+del p
+
 config = conf.config()
-col = ["d","new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]
-col2= ["new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]  #testカラムの順番等
+col = ["d","new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip","filter_tag"]
+col2= ["new","d","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip","filter_tag"]  #testカラムの順番等
 
 root = tk.Tk()
 root.title("YP")
