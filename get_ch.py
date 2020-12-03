@@ -72,7 +72,10 @@ def search(config,names):
         except:                                     #設定のタイミングによってエラーが出てしまう、何とかこれで吸収してくれ
             flg = 0
             return
-
+        if conf.get_yp(config,n)[2] == "True":
+            add = "True"
+        else:
+            add = "False"
         tmp = conf.get_yp(config,n)             #YPごとに分離
         yy = res[n].text.split("\n")            #チャンネルごとに分離
         list = []
@@ -97,12 +100,11 @@ def search(config,names):
 
             #フィルター処理
             pp.append("")               #フィルタ判定　ヒットすれば背景色(21)
-            pp.append("")               #すべてタブに表示　フラグ (22)
+            pp.append(add)              #すべてタブに表示　フラグ (22)
             pp.append("")               #ブラックリスト　フラグ (23)
             pp.append("")               #SEフラグ(24)
             pp.append("")               #filter_tag(25)
             for ser in config.options("filter"):
-##                time.sleep(0.0001)       #wait入れてみてテスト
                 ward = config.get("filter",ser).split("\\\\")
                 if ward[37] == "0":
                     continue
