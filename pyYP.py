@@ -109,7 +109,6 @@ def show_yp():
 # 19 YP名 20 新着記号 21 フィルタ+背景色 22 すべてタブに表示
 # 23 ブラックリスト 24 SEフラグ 25 filter_tag
     global update2
-    all = []
     se = False
 
     if update2 == get_ch.update_t():
@@ -146,12 +145,16 @@ def show_yp():
                 if ch_list[n].set(v,"new") == "" or \
                    ch_list[n].set(v,"new") == "◎":
                     ch_list[n].set(v,"new",value = 1)
+                    if ch_list[n].set(v,"d").split(",")[2] == "True":   #終了チャンネルをすべてにも乗せる
+                        ch_list_all.insert("",tk.END,values = ch_list[n].item(v)["values"])
                 else:
                     if int(ch_list[n].set(v,"new")) >= 3:
                         ch_list[n].delete(v)
                     else:
                         new = int(ch_list[n].set(v,"new")) + 1
                         ch_list[n].set(v,"new",value = new)
+                        if ch_list[n].set(v,"d").split(",")[2] == "True":   #終了チャンネルをすべてにも乗せる
+                            ch_list_all.insert("",tk.END,values = ch_list[n].item(v)["values"])
         del name_list
 
         for pppp in ppp:
@@ -171,7 +174,7 @@ def show_yp():
                                    )
             pppp[18]=pppp[18].replace('\r', '')
             listener = str(pppp[6])+"/"+str(pppp[7])
-            ch_list[n] .insert("", "end", values=(pppp[18] + " ," + pppp[25],
+            ch_list[n] .insert("", "end", values=(pppp[18] + " ," + pppp[25] + "," + pppp[22],
                                                   pppp[20],
                                                   pppp[0],
                                                   detail,
@@ -186,7 +189,7 @@ def show_yp():
                                                   ),tags = tag)
 
             if pppp[22] == "True":      #全てtabに乗せるか判定1
-                ch_list_all.insert("", "end", values=(pppp[18] + " ," + pppp[25],
+                ch_list_all.insert("", "end", values=(pppp[18] + " ," + pppp[25] + "," + pppp[22],
                                                       pppp[20],
                                                       pppp[0],
                                                       detail,
@@ -250,7 +253,7 @@ def show_yp():
         num = 0
         for b in ch_list[n].get_children():
             item = ch_list[n].item(b)['tags']
-            if len(item) == 0:
+            if item == "" or item == "w" or item == "g":
                 if num %2 == 0:
                     ch_list[n].item(b,tags = "g")
                 else:
@@ -345,7 +348,7 @@ def show_yp():
     num = 0
     for b in ch_list_all.get_children():
         item = ch_list_all.item(b)['tags']
-        if len(item) == 0:
+        if item == "" or item == "w" or item == "g":
             if num %2 == 0:
                 ch_list_all.item(b,tags = "g")
             else:
@@ -376,7 +379,6 @@ def show_yp():
 
     del ppp
     del pppp
-    del all
     gc.collect()
 
 #終了処理
@@ -1680,7 +1682,7 @@ def new_tab():
 
     c_size_all = config.get("column_size","all").split(",")
 
-    ch_list_all.column("d"         , width = int(c_size_all[0] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("d"         , width = int(c_size_all[0] ),anchor=tk.W,stretch = "False")
     ch_list_all.column("new"       , width = int(c_size_all[1] ),anchor=tk.CENTER,stretch = "False")
     ch_list_all.column("ch_name"   , width = int(c_size_all[2] ),anchor=tk.W,stretch = "False")
     ch_list_all.column("detail"    , width = int(c_size_all[3] ),anchor=tk.W,stretch = "False")
@@ -1737,7 +1739,7 @@ def new_tab():
         scrollbary[n].pack(fill = "y", side = "right")
         scrollbarx[n].pack(fill = "x", side = "bottom")
 
-        ch_list[n].column("d"         , width = int(tab_name[3]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("d"         , width = int(tab_name[3]),anchor=tk.W,stretch = "False")
         ch_list[n].column("new"       , width = int(tab_name[4]),anchor=tk.CENTER,stretch = "False")
         ch_list[n].column("ch_name"   , width = int(tab_name[5]),anchor=tk.W,stretch = "False")
         ch_list[n].column("detail"    , width = int(tab_name[6]),anchor=tk.W,stretch = "False")
