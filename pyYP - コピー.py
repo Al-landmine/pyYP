@@ -28,10 +28,7 @@ import webbrowser
 import datetime
 import pyperclip
 import gc
-import pygame
-import psutil   #CPU優先度
 
-from gtts import gTTS
 from tkinter import colorchooser
 from tkinter import filedialog
 from operator import itemgetter
@@ -58,7 +55,7 @@ def fixed_map(option):
 ##    thread.start()
 def get_once():
     names = get_names()
-    thread = threading.Thread(target = get_ch.get_ch,args = (config,names,))
+    thread = threading.Thread(target=get_ch.get_ch,args = (config,names))
     thread.daemon = True
     thread.start()
 
@@ -75,7 +72,7 @@ def get_names():
 
 def get_start():
     names = get_names()
-    thread = threading.Thread(target = get_ch.get_ch,args = (config,names,))
+    thread = threading.Thread(target=get_ch.get_ch,args = (config,names))
     thread.daemon = True
     thread.start()
     try:    #次回更新予約
@@ -88,18 +85,6 @@ def get_start():
     print("next auto_update",after,"ms")
     root.after(after, get_start)
 
-def sound(voice):
-    try:
-        voice += "が、開始しました。"
-        tts = gTTS(text=voice, lang='ja')
-        tts.save("./yomiko.mp3")
-        pygame.mixer.init()
-        pygame.mixer.music.load("yomiko.mp3")
-        pygame.mixer.music.play(1)
-    except:
-        print("読み上げエラー")
-        pass
-
 def show_yp():
 # 0 チャンネル名<> 1 ID<> 2 TIP<> 3 コンタクトURL<> 4 ジャンル<> 5 詳細<>
 # 6 リスナー数<> 7 リレー数<> 8 ビットレート<> 9 タイプ<> 10 アーティスト<>
@@ -107,61 +92,45 @@ def show_yp():
 # 15 配信時間<> 16 ステート<> 17 コメント<> 18 ダイレクト接続
 #　後から付加した分
 # 19 YP名 20 新着記号 21 フィルタ+背景色 22 すべてタブに表示
-# 23 ブラックリスト 24 SEフラグ 25 filter_tag
+# 23 ブラックリスト 24 SEフラグ
     global update2
+    all = []
     se = False
 
     if update2 == get_ch.update_t():
         root.after(1000,show_yp)
         return
     res = get_ch.get_list()
-
-    voice = ""
-    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
     for n in range(conf.yp_names(config)[1]):
-        try:    #チャンネル数messageを消す
-            ch_list[n].delete(ch_list[n].get_children()[-1])
-        except:
-            pass
-
-        name_list = ""
+        ch_list[n].delete(*ch_list[n].get_children())   #各YPtabクリア、再現性の無いエラーがたまに出る･･･\
+                                                        #YP削除でタイミングが悪いと整合性がとれてない気がする
         ppp = res[n]
 
-        #ch_list削除&終了チャンネルを数回残す処理
-        for v in range(len(ppp)):
-            if ppp[v][1] == "":
-                continue
-            if v != 0:
-                name_list += "|"
-            name_list += ppp[v][1]
-        for v in ch_list[n].get_children():
-            if name_list == "":     #処理を軽量化するためIDがすべて無かったら一括削除
-                ch_list[n].delete(*ch_list[n].get_children())
-                break
-            m = re.fullmatch(name_list,ch_list[n].set(v,r"id"))
-            if str(m) != "None":
-                ch_list[n].delete(v)
+        if sort_listener_show.get() == True:
+            try:
+                ppp.sort(key=itemgetter(6),reverse=True)     #リスナー数順にソート
+            except:
+                pass
+        if sort_filter_show.get() == True:
+            try:
+                ppp.sort(key=itemgetter(21),reverse=True)    #フィルタソート
+            except:
+                pass
+        for m in range(len(ppp)):
+            pppp = ppp[m]
+            if pppp[22] == "True":      #全てtabに乗せるか判定1
+                all.append(pppp)
             else:
-                if ch_list[n].set(v,"status") == "" or \
-                   ch_list[n].set(v,"status") == "◎":
-                    ch_list[n].set(v,"status",value = 1)
-                else:
-                    if int(ch_list[n].set(v,"status")) >= 3:
-                        ch_list[n].delete(v)
-                    else:
-                        new = int(ch_list[n].set(v,"status")) + 1
-                        ch_list[n].set(v,"status",value = new)
-
-        del name_list
-
-        for pppp in ppp:
+                if conf.get_yp(config,n)[2] == "True":    #全てtabに乗せるか判定2
+                    all.append(pppp)
+            if m % 2 == 1:              #一行ごとに色を変える
+                tag = "g"
+            else:
+                tag = "w"
             if pppp[21] != "":          #フィルタにかかった物の色を変える
                 tag = pppp[21]
                 if pppp[20] == "◎" and pppp[23] != "True" and pppp[24] == "True": #ついでに音フラグチェック
-                    voice += str(pppp[0]) + "、"    #音声読み上げtext
                     se = True
-            else:
-                tag = ""
             detail =  html.unescape(pppp[4]         #まとめてエスケープコードも変換
                                    +pppp[5]
                                    +pppp[10]
@@ -169,11 +138,10 @@ def show_yp():
                                    +pppp[12]
                                    +pppp[17]
                                    )
-            pppp[18]=pppp[18].replace('\r', '')
             listener = str(pppp[6])+"/"+str(pppp[7])
-            ch_list[n] .insert("", "end", values=(pppp[18] + " ," + pppp[25] + "," + pppp[22],
+            ch_list[n] .insert("", "end", values=(pppp[18],
                                                   pppp[20],
-                                                  pppp[0],
+                                                  (pppp[0]),
                                                   detail,
                                                   listener,
                                                   pppp[8],
@@ -182,45 +150,21 @@ def show_yp():
                                                   pppp[19],
                                                   pppp[3],
                                                   pppp[1],
-                                                  pppp[2],
+                                                  pppp[2]
                                                   ),tags = tag)
-
-        #ソート
+        #各タブにチャンネル数付加(うーむ後付けで美しくない…）
         try:
-            if sort_listener_show.get() == True:
-                l = [(ch_list[n].set(k, "listener"), k) for k in ch_list[n].get_children('')]
-                l.sort(key=lambda t: int(t[0].split("/")[0]), reverse=True)
-                # rearrange items in sorted positions
-                for index, (val, k) in enumerate(l):
-                    ch_list[n].move(k, '', index)
-
-                # reverse sort next time
-                ch_list[n].heading("listener", command=lambda: \
-                           treeview_sort_column(ch_list[n],"listener", not reverse))
+            if m % 2 == 1:
+                tag = "w"
+            else:
+                tag = "g"
         except:
-            print("リスナー数ソートエラー")
-            pass
+            tag = "g"
 
-        try:
-            if sort_filter_show.get() == True:
-                l = [(ch_list[n].set(k, "d"), k) for k in ch_list[n].get_children('')]
-                l.sort(key=lambda t: t[0].split(",")[1], reverse=True)
-                # rearrange items in sorted positions
-                for index, (val, k) in enumerate(l):
-                    ch_list[n].move(k, '', index)
-
-                # reverse sort next time
-                ch_list[n].heading("d", command=lambda: \
-                           treeview_sort_column(ch_list[n],"d", not reverse))
-        except:
-            print("フィルタ ソートエラー")
-            pass
-
-        #各タブにチャンネル数付加
-        ch_list[n] .insert("", "end", values=("0 ,,False",
+        ch_list[n] .insert("", "end", values=("0",
                                               "",
-                                              "pyYP_message",
-                                              "チャンネル数：" + (conf.get_yp(config,n)[0]) + " " + str(len(ppp)),
+                                              (conf.get_yp(config,n)[0]),
+                                              "チャンネル数："+str(len(ppp)),
                                               "-99/-99",
                                               "0",
                                               "00:00",
@@ -228,107 +172,88 @@ def show_yp():
                                               ""
                                               "",
                                               "",
-                                              "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-                                              ),tags = "")
-
-        #一行ごとに背景色を変えるtagを付ける
-        num = 0
-        for b in ch_list[n].get_children():
-            item = ch_list[n].item(b)['tags']
-            if not "#" in str(item):
-                if num %2 == 0:
-                    ch_list[n].item(b,tags = "g")
-                else:
-                    ch_list[n].item(b,tags = "w")
-                num += 1
-
-        #背景色変更
+                                              ""
+                                              ),tags = tag)
         for c in conf.color_list(config):
             ch_list[n].tag_configure(c,background = c)
         ch_list[n] .tag_configure("g",background='#f0f0f0')
-        ch_list[n] .tag_configure("w",background='#ffffff')
 
-#全てtab
-    #すべてタブに必要な物だけ転載
-    for n in range(conf.yp_names(config)[1]):
-        for v in ch_list[n].get_children():
-            if ch_list[n].set(v,"d").split(",")[2] == "True":
-                ch_list_all.insert("",tk.END)
-                for s in col:   #（itemで取得すれば楽なんだけどなー、数字だけだとint型になって最初に0があるとその0消えちゃうんだよー）
-                    ch_list_all.set(ch_list_all.get_children()[-1],s,ch_list[n].set(v,s))
-                ch_list_all.item(ch_list_all.get_children()[-1],tags = ch_list[n].item(v)["tags"])
+    #全てtab
+    #チャンネル数付加
+    mess = []
+    mess.append("すべて")
+    mess.append('')
+    mess.append('')
+    mess.append('')
+    mess.append('')
+    mess.append("チャンネル数："+str(len(all)))
+    mess.append(-99)
+    mess.append("-99")
+    mess.append("0")
+    mess.append("RAW")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("00:00")
+    mess.append("")
+    mess.append("")
+    mess.append("0")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    mess.append("")
+    all.append(mess)
+    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
 
-    #ソート
-    try:
-        if sort_listener_show.get() == True:
-            l = [(ch_list_all.set(k, "listener"), k) for k in ch_list_all.get_children('')]
-            l.sort(key=lambda t: int(t[0].split("/")[0]), reverse=True)
-            # rearrange items in sorted positions
-            for index, (val, k) in enumerate(l):
-                ch_list_all.move(k, '', index)
+    if sort_listener_show.get() == True:
+        all.sort(key=itemgetter(6),reverse = True)     #リスナー数順にソート
+    if sort_filter_show.get() == True:
+        all.sort(key=itemgetter(21),reverse=True)    #フィルタソート
 
-            # reverse sort next time
-            ch_list_all.heading("listener", command=lambda: \
-                       treeview_sort_column(ch_list_all,"listener", not reverse))
-    except:
-        print("リスナー数ソートエラー")
-        pass
+    for m in range(len(all)):
 
-    try:
-        if sort_filter_show.get() == True:
-            l = [(ch_list_all.set(k, "d"), k) for k in ch_list_all.get_children('')]
-            l.sort(key=lambda t: t[0].split(",")[1], reverse=True)
-            # rearrange items in sorted positions
-            for index, (val, k) in enumerate(l):
-                ch_list_all.move(k, '', index)
+        pppp = all[m]
+        if m % 2 == 1:
+            tag = "g"
+        else:
+            tag = "w"
+        if pppp[21] == "ch":
+            tag = "ch"
+        if pppp[21] != "":
+            tag = pppp[21]
 
-            # reverse sort next time
-            ch_list_all.heading("d", command=lambda: \
-                       treeview_sort_column(ch_list_all,"d", not reverse))
-    except:
-        print("フィルタ ソートエラー")
-        pass
+        detail =  html.unescape( pppp[4]
+                                +pppp[5]
+                                +pppp[10]
+                                +pppp[11]
+                                +pppp[12]
+                                +pppp[17]
+                               )
+        listener = str(pppp[6])+"/"+str(pppp[7])
 
-    ch_list_all.insert("", "end", values=("0 ,,False",
-                                          "",
-                                          "pyYP_message",
-                                          "チャンネル数：" + "すべて" + str(len(ch_list_all.get_children())),
-                                          "-99/-99",
-                                          "0",
-                                          "00:00",
-                                          "RAW",
-                                          ""
-                                          "",
-                                          "",
-                                          "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-                                          ),tags = "")
-
-    #一行ごとに背景色を変えるtagを付ける
-    num = 0
-    for b in ch_list_all.get_children():
-        item = ch_list_all.item(b)['tags']
-        if not "#" in str(item):
-            if num %2 == 0:
-                ch_list_all.item(b,tags = "g")
-            else:
-                ch_list_all.item(b,tags = "w")
-            num += 1
-
-    #背景色変更
+        ch_list_all.insert("", "end", values=(pppp[18],
+                                              pppp[20],
+                                              (pppp[0]),
+                                              detail,
+                                              listener,
+                                              pppp[8],
+                                              pppp[15],
+                                              pppp[9],
+                                              pppp[19],
+                                              pppp[3],
+                                              pppp[1],
+                                              pppp[2]
+                                              ),tags = tag)
     for c in conf.color_list(config):
         ch_list_all.tag_configure(c,background = c)
     ch_list_all.tag_configure("g",background='#f0f0f0')
-    ch_list_all.tag_configure("w",background='#ffffff')
-    #SE　読み上げ
-    if se == True:
-        pygame.mixer.init()
-        pygame.mixer.music.load(config.get("set_filter","se"))
-        pygame.mixer.music.play(1)
 
-    if config.get("set_filter","voice") == "1" and voice != "":
-        thread2 = threading.Thread(target = sound,args = (voice,))
-        thread2.daemon = True
-        thread2.start()
+    if se == True:
+        playsound(config.get("set_filter","se"))
 
     up_time.config(text = "更新:"+(get_ch.update_t().strftime('%H時%M分%S秒　'))
                                  +"更新間隔:"+(config.get("peca","update")+"分"))
@@ -338,8 +263,8 @@ def show_yp():
 
     del ppp
     del pppp
+    del all
     gc.collect()
-
 
 #終了処理
 def on_closing():
@@ -379,7 +304,7 @@ def set_filter():
             return "break"
 
     def se_path():
-        file_path = filedialog.askopenfilename(filetypes = [("", ".wav"),("", ".mp3"),("すべて",".*")],multiple = False)
+        file_path = filedialog.askopenfilename(filetypes = [("", ".wav"),("すべて",".*")],multiple = False)
         m_path.delete(0, tk.END)
         m_path.insert(tk.END,file_path)
         if file_path == "":
@@ -416,7 +341,6 @@ def set_filter():
                 tmpa = tmp1 + "\\\\" + tmp2 + "\\\\" + tmp3 + tmp4
                 config.set("filter",tmp0,tmpa)
         config.set("set_filter","se",m_path.get())
-        config.set("set_filter","voice",str(voice_on.get()))
         get_ch.search(config,get_names())
         filt.destroy()
 
@@ -713,14 +637,9 @@ def set_filter():
 
     m_path.insert(tk.END,config.get("set_filter","se"))
 
-    voice_on = tk.StringVar()
-    voice_on.set(config.get("set_filter","voice"))
-    m_voice = tk.Checkbutton(filt,variable = voice_on ,text = "SE+チャンネル名を読み上げる。" ,font = ("",10),height = 1)
-
     m_path_label.place(x =  5 , y = 380)
-    m_path.place  (x =  12 , y = 405)
-    m_pathb.place (x = 458 , y = 402)
-    m_voice.place (x =  10 , y = 430)
+    m_path.place(x =  12 , y = 405)
+    m_pathb.place (x = 458 ,y = 402)
 
     #フィルタセッティングフレーム
     filt_set_f = tk.Frame(filt,height = 160,width = 490)
@@ -860,7 +779,7 @@ def set_filter():
     bl_show.set("0")
 
     alltab = tk.Checkbutton(tab[3],variable = alltab_show,text = "すべてタブに表示する",font = ("",10),height = 1)
-    sound = tk.Checkbutton(tab[3],variable = sound_show,text = "新着時SEを鳴らす",font = ("",10),height = 1)
+    sound = tk.Checkbutton(tab[3],variable = sound_show,text = "新着時音を鳴らす",font = ("",10),height = 1)
     bl = tk.Checkbutton(tab[3],variable = bl_show,text = "ブラックリスト(非表示)",font = ("",10),height = 1)
     default = "#ffffff"
     color = tk.Button(tab[3],text="背景色", command = getcolor,bg = default,font=("",9))
@@ -1642,31 +1561,31 @@ def new_tab():
 
     c_size_all = config.get("column_size","all").split(",")
 
-    ch_list_all.column("d"         , width = int(c_size_all[0] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("status"       , width = int(c_size_all[1] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("ch_name"   , width = int(c_size_all[2] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("detail"    , width = int(c_size_all[3] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("listener"  , width = int(c_size_all[4] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("bitrate"   , width = int(c_size_all[5] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("time"      , width = int(c_size_all[6] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("type"      , width = int(c_size_all[7] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("yp"        , width = int(c_size_all[8] ),anchor=tk.CENTER,stretch = "False")
-    ch_list_all.column("contact"   , width = int(c_size_all[9] ),anchor=tk.W,stretch = "False")
-    ch_list_all.column("id"        , width = int(c_size_all[10]),anchor=tk.W,stretch = "False")
-    ch_list_all.column("tip"       , width = int(c_size_all[11]),anchor=tk.W,stretch = "False")
+    ch_list_all.column("d"       , width = int(c_size_all[0] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("new"     , width = int(c_size_all[1] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("ch_name" , width = int(c_size_all[2] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("detail"  , width = int(c_size_all[3] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("listener", width = int(c_size_all[4] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("bitrate" , width = int(c_size_all[5] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("time"    , width = int(c_size_all[6] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("type"    , width = int(c_size_all[7] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("yp"      , width = int(c_size_all[8] ),anchor=tk.CENTER,stretch = "False")
+    ch_list_all.column("contact" , width = int(c_size_all[9] ),anchor=tk.W,stretch = "False")
+    ch_list_all.column("id"      , width = int(c_size_all[10]),anchor=tk.W,stretch = "False")
+    ch_list_all.column("tip"     , width = int(c_size_all[11]),anchor=tk.W,stretch = "False")
 
-    ch_list_all.heading("d"         , text = "D")
-    ch_list_all.heading("status"       , text = "S")
-    ch_list_all.heading("ch_name"   , text = "チャンネル名")
-    ch_list_all.heading("detail"    , text = "詳細")
-    ch_list_all.heading("listener"  , text = "リスナー数")
-    ch_list_all.heading("bitrate"   , text = "bit rate")
-    ch_list_all.heading("time"      , text = "配信時間")
-    ch_list_all.heading("type"      , text = "type")
-    ch_list_all.heading("yp"        , text = "YP")
-    ch_list_all.heading("contact"   , text = "contact URL")
-    ch_list_all.heading("id"        , text = "ID")
-    ch_list_all.heading("tip"       , text = "IP")
+    ch_list_all.heading("d"        , text = "D")
+    ch_list_all.heading("new"      , text = "新")
+    ch_list_all.heading("ch_name"  , text = "チャンネル名")
+    ch_list_all.heading("detail"   , text = "詳細")
+    ch_list_all.heading("listener" , text = "リスナー数")
+    ch_list_all.heading("bitrate"  , text = "bit rate")
+    ch_list_all.heading("time"     , text = "配信時間")
+    ch_list_all.heading("type"     , text = "type")
+    ch_list_all.heading("yp"       , text = "YP")
+    ch_list_all.heading("contact"  , text = "contact URL")
+    ch_list_all.heading("id"       , text = "ID")
+    ch_list_all.heading("tip"      , text = "IP")
 
     ch_list_all.config(yscrollcommand=scrollbary_all.set)
     ch_list_all.config(xscrollcommand=scrollbarx_all.set)
@@ -1699,31 +1618,31 @@ def new_tab():
         scrollbary[n].pack(fill = "y", side = "right")
         scrollbarx[n].pack(fill = "x", side = "bottom")
 
-        ch_list[n].column("d"         , width = int(tab_name[3]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("status"       , width = int(tab_name[4]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("ch_name"   , width = int(tab_name[5]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("detail"    , width = int(tab_name[6]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("listener"  , width = int(tab_name[7]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("bitrate"   , width = int(tab_name[8]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("time"      , width = int(tab_name[9]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("type"      , width = int(tab_name[10]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("yp"        , width = int(tab_name[11]),anchor=tk.CENTER,stretch = "False")
-        ch_list[n].column("contact"   , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("id"        , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
-        ch_list[n].column("tip"       , width = int(tab_name[13]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("d"       , width = int(tab_name[3]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("new"     , width = int(tab_name[4]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("ch_name" , width = int(tab_name[5]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("detail"  , width = int(tab_name[6]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("listener", width = int(tab_name[7]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("bitrate" , width = int(tab_name[8]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("time"    , width = int(tab_name[9]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("type"    , width = int(tab_name[10]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("yp"      , width = int(tab_name[11]),anchor=tk.CENTER,stretch = "False")
+        ch_list[n].column("contact" , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("id"      , width = int(tab_name[12]),anchor=tk.W,stretch = "False")
+        ch_list[n].column("tip"     , width = int(tab_name[13]),anchor=tk.W,stretch = "False")
 
-        ch_list[n].heading("d"         , text = "D")
-        ch_list[n].heading("status"       , text = "S")
-        ch_list[n].heading("ch_name"   , text = "チャンネル名")
-        ch_list[n].heading("detail"    , text = "詳細")
-        ch_list[n].heading("listener"  , text = "リスナー数")
-        ch_list[n].heading("bitrate"   , text = "bit rate")
-        ch_list[n].heading("time"      , text = "配信時間")
-        ch_list[n].heading("type"      , text = "type")
-        ch_list[n].heading("yp"        , text = "YP")
-        ch_list[n].heading("contact"   , text = "contact URL")
-        ch_list[n].heading("id"        , text = "ID")
-        ch_list[n].heading("tip"       , text = "IP")
+        ch_list[n].heading("d"        , text = "D")
+        ch_list[n].heading("new"      , text = "新")
+        ch_list[n].heading("ch_name"  , text = "チャンネル名")
+        ch_list[n].heading("detail"   , text = "詳細")
+        ch_list[n].heading("listener" , text = "リスナー数")
+        ch_list[n].heading("bitrate"  , text = "bit rate")
+        ch_list[n].heading("time"     , text = "配信時間")
+        ch_list[n].heading("type"     , text = "type")
+        ch_list[n].heading("yp"       , text = "YP")
+        ch_list[n].heading("contact"  , text = "contact URL")
+        ch_list[n].heading("id"       , text = "ID")
+        ch_list[n].heading("tip"      , text = "IP")
 
         ch_list[n].config(yscrollcommand=scrollbary[n].set)
         ch_list[n].config(xscrollcommand=scrollbarx[n].set)
@@ -1789,14 +1708,9 @@ def select_s(event,n):
             a = str(c_type[1])        #引数
             play(list,player,a,list["type"])
 #mainGUI
-    #(高HIGH_PRIORITY_CLASS,通常以上ABOVE_NORMAL_PRIORITY_ CLASS,通常NORMAL_PRIORITY_CLASS,通常以下BELOW_NORMAL_PRIORITY_CLASS,低IDLE_PRIORITY_CLASS)
-p = psutil.Process()                #CPU優先度
-p.nice(psutil.IDLE_PRIORITY_CLASS)
-del p
-
 config = conf.config()
-col = ["d","status","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]
-col2= ["status","d","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]  #testカラムの順番等
+col = ["d","new","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]
+col2= ["new","d","ch_name","detail","listener","bitrate","time","type","yp","contact","id","tip"]  #testカラムの順番等
 
 root = tk.Tk()
 root.title("YP")
@@ -2071,7 +1985,6 @@ def mouse_y_scroll_s(event,n):
     elif event.delta < 0:
         ch_list[n].yview_scroll(2, 'units')
 
-count = 0
 update2 = 0
 new_tab()
 get_start()

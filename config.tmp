@@ -1,0 +1,63 @@
+[SETTING]
+window_x = 475
+window_y = 512
+position_x = 1442
+position_y = 510
+sort_filter = True
+sort_listener = True
+
+[column_size]
+all = 20,20,125,213,70,80,55,55,55,308,200,200
+
+[YP]
+sp = SP,http://bayonet.ddo.jp/sp/,True,20,20,113,226,80,55,55,55,55,200,200,200
+tp = TP,http://temp.orz.hm/yp/,True,20,20,104,223,80,55,55,55,55,200,200,200
+芝 = 芝,http://peercast.takami98.net/turf-page/,True,20,20,120,209,80,55,55,55,55,200,200,200
+平成yp = 平成YP,http://yp.pcgw.pgw.jp/,True,20,20,122,209,80,55,55,55,55,200,200,200
+ypv6 = YPv6,http://ypv6.pecastation.org/,True,20,20,121,209,80,55,55,55,55,200,200,200
+abema = Abema,http://localhost:57144/abema/,False,20,20,188,209,80,55,55,55,55,200,200,200
+tv = TV,http://localhost:57144/tv/,False,20,20,198,209,80,55,55,55,55,200,200,200
+twitch = Twitch,http://gerogugu.web.fc2.com/tjyp/,False,20,20,141,259,80,55,55,55,55,200,200,200
+kukulu = kukulu,http://kukulu.erinn.biz/yp/,False,20,20,140,181,80,55,55,55,55,200,200,200
+
+[peca]
+peca_port = localhost:7808
+peca_port2 = localhost:7818
+update = 1
+timeout = 15
+
+[player]
+1 = D:\Program Files\PeCaRecorder_v087\BatFiles\PeCaSL\PeCaSL3.exe,"$3" "$0",web|abema
+2 = D:\Program Files\PeCaRecorder_v087\PCRPlayer\PCRPlayer.exe,"$X" "$0" "$3",flv|wmv
+
+[tool]
+bbs_browser = D:/Program Files/PeCaRecorder_v087/PCRPlayer2/PCRBrowser.exe,"$3"
+--------------------- = ,
+direct接続 = D:\Program Files\PeCaRecorder_v087\PCRPlayer\PCRPlayer.exe,"http://$2/stream/$1.$9" "$0" "$3"
+明るさ補正 pcrplayer = D:\Program Files\PeCaRecorder_v087\PCRPlayer2\PCRPlayerL.exe,"$x" "$0" "$3"
+vlc = D:\Program Files\VideoLAN\VLC\vlc.exe,"$X"
+peerstplayer = D:\Program Files\PeCaRecorder_v087\PeerstPlayer-5.1.35\PeerstPlayer.exe,"$x" "$9" "$0"
+pcfp = D:\Program Files\pcypLite\pcfp\pcfp.exe,"$y" "$0" "$3"
+pecast = D:\Program Files\PeCaRecorder_v087\BatFiles\PecaSt7808\PecaSt7808.exe,"$W" "$0" "$3"
+-------------------- = ,
+liveport(chat） = D:\Program Files\liveport\liveport.exe,"$3"
+streamの解像度確認 = D:\Program Files\PeCaRecorder_v087\BatFiles\streamlinkDPI.bat,"$3"
+youtube-dl = D:\Program Files\PeCaRecorder_v087\BatFiles\youtube-dl.bat,"$3"
+
+[set_filter]
+se = C:/Users/Pan/Desktop/YP2/sample.mp3
+voice = 1
+
+[filter]
+b.list = やすひろ|生命体|コクマロ|柴田|津田|胤舜|いい加減な冒険者|めるch|おのり配信|http://yy71.60.kg/onori/|おもち階段|http://jbbs.livedoor.jp/radio/25926/|Maya|ファイヤードラゴン|有馬|http://jbbs\.shitaraba\.net/bbs/read\.cgi/internet/15803/|http://jbbs\.shitaraba\.net/internet/15803/|\(　´Д｀\)|スポポ|くろけだま|ヒトシズム|双一|とどとど|MakaimuraMKM|たかし|ゆうちゃん亭|ジップリ|\(　´ω｀\)だんごむし|無職戦士ヤスヒロ|http://jbbs.shitaraba.net/bbs/read.cgi/study/11150/|ひざがくさい|ARUNKO|くわいえっと|ふぉるてだるく|NURO光120FPS配信|蟹ch|나무아키|밥스터맞음|きんご|kitamiiman|https://bbs.jpnkn.com/test/read.cgi/G2D4N/|安井|루나틱하이슈쯔\\\\\\1\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\#ffffff\\1\\0\\0
+キャンプ = 飲む打つ|^kitami|キャンプ|車載|釣り|今日もミラー|あいうしお|へりたご|http://jbbs.shitaraba.net/bbs/read.cgi/game/58669/\\\\abem|tv|https://www.twitch.tv/kitamichi\\1\\1\\1\\1\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\0\\1\\1\\0\\#ffacac\\1\\0\\1
+sound = 沙竹唯c|くわい|わくちゃんねる|麻雀3|あきひろ|わくらば|予定地|ジノ|DDch|あくえり\\\\web\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\1\\0\\#59eeff\\1\\0\\1
+tv(生) = 阪神|猛虎|タイガース|清水|moto\\生\\\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\0\\#ffcbb3\\1\\1\\0
+tv = F1グランプリ|GPニュース|WEC|とある科学の|へやキャン|ゲームセンターCX|YOUは何しに日本へ|和風総本家|ニッポン行きたい人応援団|Re:ゼロから始める異世界生活|医龍|JIN|エスパルス|LIAR GAME\\TV|abema\\\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\0\\#ff8000\\1\\1\\0
+news = News|ウェザーニュース\\Abema|Twitch\\\\1\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\#f0f000\\1\\1\\0
+abema = 孤独のグルメ|はたらく細胞\\abema|tv\\Twitch|Abema|TV\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\1\\1\\0\\#00ff40\\1\\1\\0
+★ = アスカ|ｱｽｶ|裏白|番長武田ch|^しいな|握り飯i|Weちゃんねる|エルバ|^nama-cast|幽ch|まぶしいくらいの衣装で殺して|弁当屋|STRIDER|サカス|栗の木|ココノカ|バルサンch|AKA7ch|ぽこはち|^uji|零細企業戦士|芋虫|やる気まいなす８億光年\\\\web\\1\\1\\1\\1\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\1\\0\\#22ddd3\\1\\0\\1
+☆ = トミーXP|戦後|ぬぽふ|noita|相模ch\\\\\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\1\\0\\#ffa2a2\\1\\0\\0
+twitch = Plonk|あいうしお|aiushio|RTAinJapan|super_turbokun\\web\\\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\#00ff00\\1\\1\\0
+test = sp\\\\\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\1\\0\\0\\#d5aaff\\1\\0\\0
+

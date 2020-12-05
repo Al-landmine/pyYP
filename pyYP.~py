@@ -231,7 +231,7 @@ def show_yp():
                                               "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                               ),tags = "")
 
-        #一行ごとに背景色を変えるtagを付ける
+        #一行ごとに背景色を変える
         num = 0
         for b in ch_list[n].get_children():
             item = ch_list[n].item(b)['tags']
@@ -257,7 +257,8 @@ def show_yp():
                 for s in col:   #（itemで取得すれば楽なんだけどなー、数字だけだとint型になって最初に0があるとその0消えちゃうんだよー）
                     ch_list_all.set(ch_list_all.get_children()[-1],s,ch_list[n].set(v,s))
                 ch_list_all.item(ch_list_all.get_children()[-1],tags = ch_list[n].item(v)["tags"])
-
+##    del n
+##    del v
     #ソート
     try:
         if sort_listener_show.get() == True:
@@ -303,7 +304,7 @@ def show_yp():
                                           "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
                                           ),tags = "")
 
-    #一行ごとに背景色を変えるtagを付ける
+    #一行ごとに背景色を変える
     num = 0
     for b in ch_list_all.get_children():
         item = ch_list_all.item(b)['tags']
