@@ -117,7 +117,6 @@ def show_yp():
     res = get_ch.get_list()
 
     voice = ""
-    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
     for n in range(conf.yp_names(config)[1]):
         try:    #チャンネル数messageを消す
             ch_list[n].delete(ch_list[n].get_children()[-1])
@@ -249,6 +248,7 @@ def show_yp():
         ch_list[n] .tag_configure("w",background='#ffffff')
 
 #全てtab
+    ch_list_all.delete(*ch_list_all.get_children()) #ch_list_allクリア
     #すべてタブに必要な物だけ転載
     for n in range(conf.yp_names(config)[1]):
         for v in ch_list[n].get_children():
@@ -1762,9 +1762,9 @@ def play(list,player,arg,type):
 
 #チャンネルリストダブルクリック
 def select(event):
-    for item in ch_list_all.selection():
-        if not item:
-            return
+    item = ch_list_all.selection()
+    if ch_list_all.set(item,"type") == "":
+        return
     list = ch_list_all.set(item)
     for n in config.options("player"):
         c_type = config.get("player",n).split(",")
@@ -1776,9 +1776,9 @@ def select(event):
             play(list,player,a,list["type"])
 
 def select_s(event,n):
-    for item in ch_list[n].selection():
-        if not item:
-            return
+    item = ch_list[n].selection()
+    if ch_list[n].set(item,"type") == "":
+        return
     list = ch_list[n].set(item)
     for n in config.options("player"):
         c_type = config.get("player",n).split(",")
@@ -1788,6 +1788,7 @@ def select_s(event,n):
             player = c_type[0]        #マッチしたプレイヤー
             a = str(c_type[1])        #引数
             play(list,player,a,list["type"])
+
 #mainGUI
     #(高HIGH_PRIORITY_CLASS,通常以上ABOVE_NORMAL_PRIORITY_ CLASS,通常NORMAL_PRIORITY_CLASS,通常以下BELOW_NORMAL_PRIORITY_CLASS,低IDLE_PRIORITY_CLASS)
 p = psutil.Process()                #CPU優先度
